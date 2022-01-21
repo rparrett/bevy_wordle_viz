@@ -11,6 +11,22 @@ struct CameraContainer;
 #[derive(Default)]
 pub struct WordleShare(String);
 
+pub struct Handles {
+    green_box: Handle<Scene>,
+    yellow_box: Handle<Scene>,
+    floor: Handle<Scene>,
+}
+impl FromWorld for Handles {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.get_resource_mut::<AssetServer>().unwrap();
+        Self {
+            green_box: asset_server.load("container-green.glb#Scene0"),
+            yellow_box: asset_server.load("container-yellow.glb#Scene0"),
+            floor: asset_server.load("floor.glb#Scene0"),
+        }
+    }
+}
+
 const CUBE_SIZE: (f32, f32, f32) = (2.15, 2.11, 2.23);
 
 fn main() {
@@ -20,6 +36,7 @@ fn main() {
             brightness: 1.0 / 12.0f32,
         })
         .add_plugins(DefaultPlugins)
+        .init_resource::<Handles>()
         .init_resource::<WordleShare>()
         .add_plugin(clipboard::ClipboardPlugin)
         .add_startup_system(setup)
@@ -42,11 +59,7 @@ fn rotate_camera(time: Res<Time>, mut query: Query<&mut Transform, With<CameraCo
     }
 }
 
-fn spawn_wordle(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    wordle_share: Res<WordleShare>,
-) {
+fn spawn_wordle(mut commands: Commands, handles: Res<Handles>, wordle_share: Res<WordleShare>) {
     if !wordle_share.is_changed() {
         return;
     }
@@ -64,8 +77,8 @@ fn spawn_wordle(
 
         for char in line.chars() {
             let handle = match char {
-                '🟨' => Some(asset_server.load("container-yellow.glb#Scene0")),
-                '🟩' => Some(asset_server.load("container-green.glb#Scene0")),
+                '🟨' => Some(handles.yellow_box.clone()),
+                '🟩' => Some(handles.green_box.clone()),
                 _ => None,
             };
 
@@ -86,7 +99,7 @@ fn spawn_wordle(
 
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    handles: Res<Handles>,
     mut meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -96,7 +109,7 @@ fn setup(
             GlobalTransform::default(),
         ))
         .with_children(|parent| {
-            parent.spawn_scene(asset_server.load("floor.glb#Scene0"));
+            parent.spawn_scene(handles.floor.clone());
         });
 
     commands
