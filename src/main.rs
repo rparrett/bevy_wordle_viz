@@ -7,6 +7,8 @@ struct LightContainer;
 
 #[derive(Component)]
 struct CameraContainer;
+#[derive(Component)]
+pub struct WordleBox;
 
 #[derive(Default)]
 pub struct WordleShare(String);
@@ -59,9 +61,18 @@ fn rotate_camera(time: Res<Time>, mut query: Query<&mut Transform, With<CameraCo
     }
 }
 
-fn spawn_wordle(mut commands: Commands, handles: Res<Handles>, wordle_share: Res<WordleShare>) {
+fn spawn_wordle(
+    mut commands: Commands,
+    handles: Res<Handles>,
+    wordle_share: Res<WordleShare>,
+    query: Query<Entity, With<WordleBox>>,
+) {
     if !wordle_share.is_changed() {
         return;
+    }
+
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 
     let valid = ['⬛', '⬜', '🟨', '🟩'];
@@ -84,7 +95,11 @@ fn spawn_wordle(mut commands: Commands, handles: Res<Handles>, wordle_share: Res
 
             if let Some(handle) = handle {
                 commands
-                    .spawn_bundle((Transform::from_xyz(x, y, 0.0), GlobalTransform::default()))
+                    .spawn_bundle((
+                        Transform::from_xyz(x, y, 0.0),
+                        GlobalTransform::default(),
+                        WordleBox,
+                    ))
                     .with_children(|parent| {
                         parent.spawn_scene(handle);
                     });
