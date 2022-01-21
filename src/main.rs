@@ -88,15 +88,8 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // plane
-    /*
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 1000.0 })),
-        material: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
-        ..Default::default()
-    });*/
     commands
         .spawn_bundle((
             Transform::from_xyz(0.0, 0.0, 0.0),
