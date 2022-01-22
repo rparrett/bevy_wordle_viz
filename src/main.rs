@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::collections::HashSet;
 
 #[cfg_attr(not(target_arch = "wasm32"), path = "native_clipboard.rs")]
 #[cfg_attr(target_arch = "wasm32", path = "wasm_clipboard.rs")]
@@ -18,6 +19,7 @@ pub struct WordleShare(String);
 pub struct Handles {
     green_box: Handle<Scene>,
     yellow_box: Handle<Scene>,
+    black_box: Handle<Scene>,
     floor: Handle<Scene>,
 }
 impl FromWorld for Handles {
@@ -26,6 +28,7 @@ impl FromWorld for Handles {
         Self {
             green_box: asset_server.load("container-green.glb#Scene0"),
             yellow_box: asset_server.load("container-yellow.glb#Scene0"),
+            black_box: asset_server.load("container-black.glb#Scene0"),
             floor: asset_server.load("floor.glb#Scene0"),
         }
     }
@@ -77,44 +80,53 @@ fn spawn_wordle(
         return;
     }
 
+    let valid = ['⬛', '⬜', '🟨', '🟩'];
+
+    let grid = wordle_share
+        .0
+        .lines()
+        .filter(|line| line.chars().all(|c| valid.contains(&c)))
+        .collect::<Vec<_>>();
+
+    if grid.is_empty() {
+        return;
+    }
+
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
-    let valid = ['⬛', '⬜', '🟨', '🟩'];
+    let mut needs_support = HashSet::new();
 
-    let mut y: f32 = 0.0;
+    let top = (grid.len() - 1) as f32 * CUBE_SIZE.1;
+    let left = -2.0 * CUBE_SIZE.0;
 
-    for line in wordle_share.0.lines().rev() {
-        let mut x: f32 = -2.0 * CUBE_SIZE.0;
-
-        if line.chars().any(|c| !valid.contains(&c)) {
-            continue;
-        }
-
-        for char in line.chars() {
-            let handle = match char {
-                '🟨' => Some(handles.yellow_box.clone()),
-                '🟩' => Some(handles.green_box.clone()),
-                _ => None,
-            };
-
-            if let Some(handle) = handle {
-                commands
-                    .spawn_bundle((
-                        Transform::from_xyz(x, y, 0.0),
-                        GlobalTransform::default(),
-                        WordleBox,
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn_scene(handle);
-                    });
+    for (row, chars) in grid.iter().enumerate() {
+        for (col, char) in chars.chars().enumerate() {
+            if char == '🟨' || char == '🟩' {
+                needs_support.insert(col);
             }
 
-            x += CUBE_SIZE.0;
-        }
+            let handle = match char {
+                '🟨' => handles.yellow_box.clone(),
+                '🟩' => handles.green_box.clone(),
+                '⬛' | '⬜' if needs_support.contains(&col) => handles.black_box.clone(),
+                _ => continue,
+            };
 
-        y += CUBE_SIZE.1;
+            let x = left + CUBE_SIZE.0 * col as f32;
+            let y = top - CUBE_SIZE.1 * row as f32;
+
+            commands
+                .spawn_bundle((
+                    Transform::from_xyz(x, y, 0.0),
+                    GlobalTransform::default(),
+                    WordleBox,
+                ))
+                .with_children(|parent| {
+                    parent.spawn_scene(handle);
+                });
+        }
     }
 }
 
