@@ -1,5 +1,7 @@
 # bevy_wordle_viz
 
+![A stack of boxes in the shape of a Wordle puzzle](docs/screenshot.png)
+
 ## Dependencies
 
 ### Linux
