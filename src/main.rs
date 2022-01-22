@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+#[cfg_attr(not(target_arch = "wasm32"), path = "native_clipboard.rs")]
+#[cfg_attr(target_arch = "wasm32", path = "wasm_clipboard.rs")]
 mod clipboard;
 
 #[derive(Component)]

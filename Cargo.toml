@@ -8,10 +8,13 @@ edition = "2021"
 [dependencies]
 bevy = "0.6"
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+clipboard = "0.5"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "*", features = ["Element", "Document", "Window", "Clipboard", "ClipboardEvent", "DataTransfer"] }
 wasm-bindgen = "*"
 gloo-events = "0.1"
-
 futures = "0.3"
 
 # Enable only a small amount of optimization in debug mode
