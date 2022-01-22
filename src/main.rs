@@ -86,7 +86,7 @@ fn spawn_wordle(
     let mut y: f32 = 0.0;
 
     for line in wordle_share.0.lines().rev() {
-        let mut x: f32 = -2.5 * CUBE_SIZE.0;
+        let mut x: f32 = -2.0 * CUBE_SIZE.0;
 
         if line.chars().any(|c| !valid.contains(&c)) {
             continue;
