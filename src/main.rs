@@ -44,7 +44,7 @@ fn main() {
         })
         .insert_resource(AmbientLight {
             color: Color::WHITE,
-            brightness: 1.0 / 12.0f32,
+            brightness: 1.0 / 16.0f32,
         })
         .add_plugins(DefaultPlugins)
         .init_resource::<Handles>()
@@ -171,7 +171,7 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
             ] {
                 parent.spawn_bundle(PointLightBundle {
                     point_light: PointLight {
-                        intensity: 1000.0,
+                        intensity: 900.0,
                         shadows_enabled: true,
                         radius: 20.,
                         ..Default::default()
