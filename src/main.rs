@@ -35,6 +35,10 @@ const CUBE_SIZE: (f32, f32, f32) = (2.15, 2.11, 2.23);
 
 fn main() {
     App::new()
+        .insert_resource(WindowDescriptor {
+            title: "Bevy Wordle Viz".to_string(),
+            ..Default::default()
+        })
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 1.0 / 12.0f32,
