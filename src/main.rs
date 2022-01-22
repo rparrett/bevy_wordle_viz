@@ -148,8 +148,8 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
         ))
         .with_children(|parent| {
             parent.spawn_bundle(PerspectiveCameraBundle {
-                transform: Transform::from_xyz(13.0, 13.0, 13.0)
-                    .looking_at(Vec3::new(-6.0, 1.0, -6.0), Vec3::Y),
+                transform: Transform::from_xyz(14.0, 15.0, 14.0)
+                    .looking_at(Vec3::new(-7.0, 1.0, -7.0), Vec3::Y),
                 ..Default::default()
             });
         });
