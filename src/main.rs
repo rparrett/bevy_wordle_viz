@@ -114,12 +114,7 @@ fn spawn_wordle(
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    handles: Res<Handles>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
-) {
+fn setup(mut commands: Commands, handles: Res<Handles>) {
     commands
         .spawn_bundle((
             Transform::from_xyz(0.0, 0.0, 0.0),
@@ -144,11 +139,6 @@ fn setup(
         });
 
     let light_dist = 8.0;
-    let light_mesh = meshes.add(Mesh::from(shape::UVSphere {
-        sectors: 128,
-        stacks: 64,
-        ..Default::default()
-    }));
 
     commands
         .spawn_bundle((
@@ -173,16 +163,6 @@ fn setup(
                     transform,
                     ..Default::default()
                 });
-                /*parent.spawn_bundle(PbrBundle {
-                    mesh: light_mesh.clone(),
-                    material: materials.add(StandardMaterial {
-                        base_color: Color::rgb(0.5, 0.5, 1.0),
-                        unlit: true,
-                        ..Default::default()
-                    }),
-                    transform: transform.with_scale(Vec3::splat(1.)),
-                    ..Default::default()
-                });*/
             }
         });
 }
