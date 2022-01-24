@@ -130,7 +130,10 @@ fn spawn_wordle(
     let left = -2.0 * CUBE_SIZE.0;
 
     let mut delay = 0.;
+
     let delay_step = 0.4;
+    let row_delay_step = 0.6;
+    let mut prev_row = 0;
 
     let current_time = time.seconds_since_startup();
 
@@ -145,13 +148,19 @@ fn spawn_wordle(
             _ => continue,
         };
 
-        delay += delay_step;
+        delay += if row != prev_row {
+            row_delay_step
+        } else {
+            delay_step
+        };
+
+        prev_row = row;
 
         let x = left + CUBE_SIZE.0 * col as f32;
         let y = CUBE_SIZE.1 * row as f32;
 
         let destination = Vec3::new(x, y, 0.0);
-        let transform = Transform::from_translation(destination + Vec3::new(0.0, 15.0, 0.0));
+        let transform = Transform::from_translation(destination + Vec3::new(0.0, 16.0, 0.0));
 
         info!("{} {}", current_time + delay, delay);
 
