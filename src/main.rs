@@ -1,9 +1,14 @@
 use bevy::prelude::*;
-use std::collections::HashSet;
+use bevy_easings::*;
+use std::str::FromStr;
+use wordle::WordleGrid;
+
+use crate::wordle::WordleGuessKind;
 
 #[cfg_attr(not(target_arch = "wasm32"), path = "native_clipboard.rs")]
 #[cfg_attr(target_arch = "wasm32", path = "wasm_clipboard.rs")]
 mod clipboard;
+mod wordle;
 
 #[derive(Component)]
 struct LightContainer;
@@ -12,6 +17,10 @@ struct LightContainer;
 struct CameraContainer;
 #[derive(Component)]
 pub struct WordleBox;
+#[derive(Component)]
+pub struct StartTime(f64);
+#[derive(Component)]
+pub struct Destination(Transform);
 
 #[derive(Default)]
 pub struct WordleShare(String);
@@ -50,10 +59,12 @@ fn main() {
         .init_resource::<Handles>()
         .init_resource::<WordleShare>()
         .add_plugin(clipboard::ClipboardPlugin)
+        .add_plugin(EasingsPlugin)
         .add_startup_system(setup)
         .add_system(spawn_wordle)
         .add_system(rotate_lights)
         .add_system(rotate_camera)
+        .add_system(drop_boxes)
         .run();
 }
 
@@ -70,63 +81,91 @@ fn rotate_camera(time: Res<Time>, mut query: Query<&mut Transform, With<CameraCo
     }
 }
 
+fn drop_boxes(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &Transform, &Destination, &StartTime)>,
+) {
+    let current_time = time.seconds_since_startup();
+    for (entity, transform, destination, start_time) in query.iter_mut() {
+        if start_time.0 > current_time {
+            continue;
+        }
+        info!("starting");
+
+        commands.entity(entity).insert(transform.ease_to(
+            destination.0,
+            EaseFunction::CubicIn,
+            EasingType::Once {
+                duration: std::time::Duration::from_secs(2),
+            },
+        ));
+        commands.entity(entity).remove::<Destination>();
+        commands.entity(entity).remove::<StartTime>();
+    }
+}
+
 fn spawn_wordle(
     mut commands: Commands,
     handles: Res<Handles>,
     wordle_share: Res<WordleShare>,
     query: Query<Entity, With<WordleBox>>,
+    time: Res<Time>,
 ) {
     if !wordle_share.is_changed() {
         return;
     }
 
-    let valid = ['⬛', '⬜', '🟨', '🟩'];
+    let grid = WordleGrid::from_str(&wordle_share.0);
 
-    let grid = wordle_share
-        .0
-        .lines()
-        .filter(|line| line.chars().all(|c| valid.contains(&c)))
-        .collect::<Vec<_>>();
-
-    if grid.is_empty() {
-        return;
-    }
+    let grid = match grid {
+        Ok(grid) => grid,
+        _ => return,
+    };
 
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
-    let mut needs_support = HashSet::new();
-
-    let top = (grid.len() - 1) as f32 * CUBE_SIZE.1;
     let left = -2.0 * CUBE_SIZE.0;
 
-    for (row, chars) in grid.iter().enumerate() {
-        for (col, char) in chars.chars().enumerate() {
-            if char == '🟨' || char == '🟩' {
-                needs_support.insert(col);
+    let mut delay = 0.;
+    let delay_step = 0.4;
+
+    let current_time = time.seconds_since_startup();
+
+    for (row, col, guess) in grid.snake_iter() {
+        info!("{} {} {:?}", row, col, guess.kind);
+        let handle = match guess.kind {
+            WordleGuessKind::InWord => handles.yellow_box.clone(),
+            WordleGuessKind::Correct => handles.green_box.clone(),
+            WordleGuessKind::NotInWord if guess.support || guess.topper => {
+                handles.black_box.clone()
             }
+            _ => continue,
+        };
 
-            let handle = match char {
-                '🟨' => handles.yellow_box.clone(),
-                '🟩' => handles.green_box.clone(),
-                '⬛' | '⬜' if needs_support.contains(&col) => handles.black_box.clone(),
-                _ => continue,
-            };
+        delay += delay_step;
 
-            let x = left + CUBE_SIZE.0 * col as f32;
-            let y = top - CUBE_SIZE.1 * row as f32;
+        let x = left + CUBE_SIZE.0 * col as f32;
+        let y = CUBE_SIZE.1 * row as f32;
 
-            commands
-                .spawn_bundle((
-                    Transform::from_xyz(x, y, 0.0),
-                    GlobalTransform::default(),
-                    WordleBox,
-                ))
-                .with_children(|parent| {
-                    parent.spawn_scene(handle);
-                });
-        }
+        let destination = Vec3::new(x, y, 0.0);
+        let transform = Transform::from_translation(destination + Vec3::new(0.0, 15.0, 0.0));
+
+        info!("{} {}", current_time + delay, delay);
+
+        commands
+            .spawn_bundle((
+                transform,
+                GlobalTransform::default(),
+                WordleBox,
+                StartTime(current_time + delay),
+                Destination(Transform::from_translation(destination)),
+            ))
+            .with_children(|parent| {
+                parent.spawn_scene(handle);
+            });
     }
 }
 
