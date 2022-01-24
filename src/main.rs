@@ -91,7 +91,6 @@ fn drop_boxes(
         if start_time.0 > current_time {
             continue;
         }
-        info!("starting");
 
         commands.entity(entity).insert(transform.ease_to(
             destination.0,
