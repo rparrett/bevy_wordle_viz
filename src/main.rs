@@ -138,7 +138,6 @@ fn spawn_wordle(
     let current_time = time.seconds_since_startup();
 
     for (row, col, guess) in grid.snake_iter() {
-        info!("{} {} {:?}", row, col, guess.kind);
         let handle = match guess.kind {
             WordleGuessKind::InWord => handles.yellow_box.clone(),
             WordleGuessKind::Correct => handles.green_box.clone(),
@@ -161,8 +160,6 @@ fn spawn_wordle(
 
         let destination = Vec3::new(x, y, 0.0);
         let transform = Transform::from_translation(destination + Vec3::new(0.0, 16.0, 0.0));
-
-        info!("{} {}", current_time + delay, delay);
 
         commands
             .spawn_bundle((
