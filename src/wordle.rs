@@ -76,6 +76,10 @@ impl FromStr for WordleGrid {
         let s = s.replace(":white_large_square:", &BLACK.to_string());
         let s = s.replace(":large_green_square:", &GREEN.to_string());
         let s = s.replace(":large_yellow_square:", &YELLOW.to_string());
+        // twitter
+        let s = s.replace("Black large square", &BLACK.to_string());
+        let s = s.replace("Green square", &GREEN.to_string());
+        let s = s.replace("Yellow square", &YELLOW.to_string());
 
         for line in s.lines().rev() {
             if line.starts_with("Wordle") {
