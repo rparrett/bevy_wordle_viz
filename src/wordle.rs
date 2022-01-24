@@ -71,6 +71,12 @@ impl FromStr for WordleGrid {
         let mut number = None;
         let mut prev_num_cols = None;
 
+        // slack
+        let s = s.replace(":black_large_square:", &BLACK.to_string());
+        let s = s.replace(":white_large_square:", &BLACK.to_string());
+        let s = s.replace(":large_green_square:", &GREEN.to_string());
+        let s = s.replace(":large_yellow_square:", &YELLOW.to_string());
+
         for line in s.lines().rev() {
             if line.starts_with("Wordle") {
                 if let Some(num) = line
