@@ -36,7 +36,7 @@ cargo run [--release]
 
 Your favorite social media platform or chat app might mangle the output of wordle's share feature by replacing glyphs with their own icons.
 
-This only works with the raw unicode output from wordle.
+This works with raw unicode from wordle and pastes from twitter or slack.
 
 ```plain
 Wordle 216 4/6
@@ -46,3 +46,7 @@ Wordle 216 4/6
 ⬛🟩🟩⬛🟩
 🟩🟩🟩🟩🟩
 ```
+
+## TODO
+
+- [ ] Optionally render to stdout for piping to ffmpeg
