@@ -161,7 +161,7 @@ fn spawn_wordle(
         let destination = Vec3::new(x, y, 0.0);
         let rotation =
             Quat::from_rotation_y(std::f32::consts::FRAC_PI_2 * rng.gen_range(0..=1) as f32);
-        let transform = Transform::from_translation(destination + Vec3::new(0.0, 16.0, 0.0))
+        let transform = Transform::from_translation(destination + Vec3::new(0.0, 14.5, 0.0))
             .with_rotation(rotation);
 
         commands
