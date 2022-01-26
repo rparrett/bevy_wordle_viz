@@ -147,14 +147,6 @@ fn spawn_wordle(
             _ => continue,
         };
 
-        delay += if row != prev_row {
-            row_delay_step
-        } else {
-            delay_step
-        };
-
-        prev_row = row;
-
         let x = left + CUBE_SIZE.0 * col as f32;
         let y = CUBE_SIZE.1 * row as f32;
 
@@ -175,6 +167,14 @@ fn spawn_wordle(
             .with_children(|parent| {
                 parent.spawn_scene(handle);
             });
+
+        delay += if row != prev_row {
+            row_delay_step
+        } else {
+            delay_step
+        };
+
+        prev_row = row;
     }
 }
 
