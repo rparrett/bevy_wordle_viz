@@ -147,14 +147,16 @@ fn spawn_wordle(
             _ => continue,
         };
 
-        let x = left + CUBE_SIZE.0 * col as f32;
-        let y = CUBE_SIZE.1 * row as f32;
-
-        let destination = Vec3::new(x, y, 0.0);
+        let start_offset = Vec3::new(0.0, 14.5, 0.0);
+        let destination = Vec3::new(
+            left + CUBE_SIZE.0 * col as f32,
+            CUBE_SIZE.1 * row as f32,
+            0.0,
+        );
         let rotation =
             Quat::from_rotation_y(std::f32::consts::FRAC_PI_2 * rng.gen_range(0..=1) as f32);
-        let transform = Transform::from_translation(destination + Vec3::new(0.0, 14.5, 0.0))
-            .with_rotation(rotation);
+        let transform =
+            Transform::from_translation(destination + start_offset).with_rotation(rotation);
 
         commands
             .spawn_bundle((
