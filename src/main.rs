@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 use bevy_easings::*;
 use std::str::FromStr;
-use wordle::WordleGrid;
-
-use crate::wordle::WordleGuessKind;
+use wordle::{WordleGrid, WordleGuessKind};
 
 #[cfg_attr(not(target_arch = "wasm32"), path = "native_clipboard.rs")]
 #[cfg_attr(target_arch = "wasm32", path = "wasm_clipboard.rs")]

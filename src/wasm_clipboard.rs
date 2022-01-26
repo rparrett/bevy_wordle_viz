@@ -1,6 +1,5 @@
 use crate::WordleShare;
 use bevy::prelude::*;
-
 use std::sync::{
     mpsc::{Receiver, Sender},
     Mutex,

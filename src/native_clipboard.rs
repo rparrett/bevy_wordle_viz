@@ -1,10 +1,8 @@
 extern crate clipboard;
 
-use bevy::prelude::*;
-use clipboard::ClipboardContext;
-use clipboard::ClipboardProvider;
-
 use crate::WordleShare;
+use bevy::prelude::*;
+use clipboard::{ClipboardContext, ClipboardProvider};
 
 pub struct ClipboardPlugin;
 
