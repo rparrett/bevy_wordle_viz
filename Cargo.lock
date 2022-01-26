@@ -743,6 +743,7 @@ dependencies = [
  "clipboard",
  "futures",
  "gloo-events",
+ "rand",
  "thiserror",
  "wasm-bindgen",
  "web-sys",

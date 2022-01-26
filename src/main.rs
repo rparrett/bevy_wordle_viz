@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_easings::*;
+use rand::prelude::*;
 use std::str::FromStr;
 use wordle::{WordleGrid, WordleGuessKind};
 
@@ -134,6 +135,8 @@ fn spawn_wordle(
 
     let current_time = time.seconds_since_startup();
 
+    let mut rng = thread_rng();
+
     for (row, col, guess) in grid.snake_iter() {
         let handle = match guess.kind {
             WordleGuessKind::InWord => handles.yellow_box.clone(),
@@ -156,7 +159,10 @@ fn spawn_wordle(
         let y = CUBE_SIZE.1 * row as f32;
 
         let destination = Vec3::new(x, y, 0.0);
-        let transform = Transform::from_translation(destination + Vec3::new(0.0, 16.0, 0.0));
+        let rotation =
+            Quat::from_rotation_y(std::f32::consts::FRAC_PI_2 * rng.gen_range(0..=1) as f32);
+        let transform = Transform::from_translation(destination + Vec3::new(0.0, 16.0, 0.0))
+            .with_rotation(rotation);
 
         commands
             .spawn_bundle((
@@ -164,7 +170,7 @@ fn spawn_wordle(
                 GlobalTransform::default(),
                 WordleBox,
                 StartTime(current_time + delay),
-                Destination(Transform::from_translation(destination)),
+                Destination(Transform::from_translation(destination).with_rotation(rotation)),
             ))
             .with_children(|parent| {
                 parent.spawn_scene(handle);
