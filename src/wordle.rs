@@ -45,7 +45,7 @@ impl TryFrom<char> for WordleGuessKind {
 pub struct WordleGrid {
     /// Optional "puzzle number" that the user may or may not have pasted in.
     pub number: Option<u32>,
-    pub grid: Vec<Vec<WordleGuess>>,
+    pub guesses: Vec<Vec<WordleGuess>>,
 }
 
 #[derive(Error, Debug)]
@@ -190,11 +190,24 @@ impl FromStr for WordleGrid {
             }
         }
 
-        Ok(WordleGrid { number, grid })
+        Ok(WordleGrid {
+            number,
+            guesses: grid,
+        })
     }
 }
 
 impl WordleGrid {
+    /// Returns the number of rows in the puzzle grid
+    pub fn rows(&self) -> usize {
+        self.guesses.len()
+    }
+
+    /// Returns the number of columns in the puzzle grid
+    pub fn columns(&self) -> usize {
+        self.guesses.first().map_or(0, |row| row.len())
+    }
+
     /// Iterate the grid from the bottom in a snake-like manner, initially
     /// left to right.
     ///
@@ -204,9 +217,7 @@ impl WordleGrid {
     pub fn snake_iter<'a>(&'a self) -> WordleGridSnakeIterator<'a> {
         WordleGridSnakeIterator {
             grid: self,
-            row: 0,
-            col: 0,
-            oob: false,
+            index: 0,
         }
     }
 }
@@ -214,53 +225,33 @@ impl WordleGrid {
 #[derive(Clone)]
 pub struct WordleGridSnakeIterator<'a> {
     grid: &'a WordleGrid,
-    row: usize,
-    col: usize,
-    oob: bool,
+    index: usize,
 }
 
 impl<'a> Iterator for WordleGridSnakeIterator<'a> {
     type Item = (usize, usize, &'a WordleGuess);
     fn next(&mut self) -> Option<Self::Item> {
-        if self.oob {
-            return None;
-        }
-        if self.row >= self.grid.grid.len() {
-            return None;
-        }
-        if self.col >= self.grid.grid[self.row].len() {
+        let rows = self.grid.rows();
+        let columns = self.grid.columns();
+
+        if rows == 0 || columns == 0 {
             return None;
         }
 
-        let item = &self.grid.grid[self.row][self.col];
-        let item_row = self.row;
-        let item_col = self.col;
+        if self.index >= columns * rows {
+            return None;
+        }
 
-        let mut overflow = false;
-        if self.row % 2 == 0 {
-            if self.col >= self.grid.grid[self.row].len() - 1 {
-                overflow = true;
-            } else {
-                self.col += 1;
-            }
+        let row = self.index / columns;
+        let col = if row % 2 == 0 {
+            self.index % columns
         } else {
-            if self.col == 0 {
-                overflow = true;
-            } else {
-                self.col -= 1;
-            }
-        }
+            columns - 1 - self.index % columns
+        };
 
-        if overflow {
-            self.col = if self.row % 2 == 0 {
-                self.grid.grid[self.row].len() - 1
-            } else {
-                0
-            };
-            self.row += 1;
-        }
+        self.index += 1;
 
-        Some((item_row, item_col, item))
+        Some((row, col, &self.grid.guesses[row][col]))
     }
 }
 
@@ -281,8 +272,6 @@ mod tests {
         assert!(grid.is_ok());
 
         let grid = grid.unwrap();
-
-        dbg!(&grid.grid);
 
         assert_eq!(grid.number, Some(218));
 
