@@ -60,8 +60,10 @@ const BLACK: char = '⬛';
 const WHITE: char = '⬜';
 const GREEN: char = '🟩';
 const YELLOW: char = '🟨';
+const CB_GREEN: char = '🟧';
+const CB_YELLOW: char = '🟦';
 
-const VALID: [char; 4] = [BLACK, WHITE, GREEN, YELLOW];
+const VALID: [char; 6] = [BLACK, WHITE, GREEN, YELLOW, CB_GREEN, CB_YELLOW];
 
 impl FromStr for WordleGrid {
     type Err = WordleParseError;
@@ -75,11 +77,15 @@ impl FromStr for WordleGrid {
         let s = s.replace(":black_large_square:", &BLACK.to_string());
         let s = s.replace(":white_large_square:", &BLACK.to_string());
         let s = s.replace(":large_green_square:", &GREEN.to_string());
+        let s = s.replace(":large_orange_square:", &GREEN.to_string());
         let s = s.replace(":large_yellow_square:", &YELLOW.to_string());
+        let s = s.replace(":large_blue_square:", &YELLOW.to_string());
         // twitter
         let s = s.replace("Black large square", &BLACK.to_string());
         let s = s.replace("Green square", &GREEN.to_string());
+        let s = s.replace("Orange square", &GREEN.to_string());
         let s = s.replace("Yellow square", &YELLOW.to_string());
+        let s = s.replace("Blue square", &YELLOW.to_string());
 
         for line in s.lines().rev() {
             if line.starts_with("Wordle") {
