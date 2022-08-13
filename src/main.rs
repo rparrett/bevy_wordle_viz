@@ -159,16 +159,16 @@ fn spawn_wordle(
             Transform::from_translation(destination + start_offset).with_rotation(rotation);
 
         commands
-            .spawn_bundle((
+            .spawn_bundle(SceneBundle {
+                scene: handle,
                 transform,
-                GlobalTransform::default(),
+                ..default()
+            })
+            .insert_bundle((
                 WordleBox,
                 StartTime(current_time + delay),
                 Destination(Transform::from_translation(destination).with_rotation(rotation)),
-            ))
-            .with_children(|parent| {
-                parent.spawn_scene(handle);
-            });
+            ));
 
         delay += if row != prev_row {
             row_delay_step
@@ -181,25 +181,19 @@ fn spawn_wordle(
 }
 
 fn setup(mut commands: Commands, handles: Res<Handles>) {
-    commands
-        .spawn_bundle((
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            GlobalTransform::default(),
-        ))
-        .with_children(|parent| {
-            parent.spawn_scene(handles.floor.clone());
-        });
+    commands.spawn_bundle(SceneBundle {
+        scene: handles.floor.clone(),
+        ..default()
+    });
 
     commands
-        .spawn_bundle((
-            Transform::default(),
-            GlobalTransform::default(),
-            CameraContainer,
-        ))
+        .spawn_bundle(SpatialBundle::default())
+        .insert(CameraContainer)
         .with_children(|parent| {
-            parent.spawn_bundle(PerspectiveCameraBundle {
+            parent.spawn_bundle(Camera3dBundle {
                 transform: Transform::from_xyz(14.0, 15.0, 14.0)
                     .looking_at(Vec3::new(-7.0, 1.0, -7.0), Vec3::Y),
+
                 ..Default::default()
             });
         });
@@ -207,11 +201,8 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
     let light_dist = 8.0;
 
     commands
-        .spawn_bundle((
-            Transform::default(),
-            GlobalTransform::default(),
-            LightContainer,
-        ))
+        .spawn_bundle(SpatialBundle::default())
+        .insert(LightContainer)
         .with_children(|parent| {
             for transform in [
                 Transform::from_xyz(light_dist, 8.0, light_dist),
@@ -223,7 +214,6 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
                     point_light: PointLight {
                         intensity: 900.0,
                         shadows_enabled: true,
-                        radius: 20.,
                         ..Default::default()
                     },
                     transform,
