@@ -72,7 +72,7 @@ fn main() {
 
 fn rotate_lights(time: Res<Time>, mut query: Query<&mut Transform, With<LightContainer>>) {
     for mut transform in query.iter_mut() {
-        transform.rotation = Quat::from_rotation_y(time.elapsed_seconds() * 0.2 as f32);
+        transform.rotation = Quat::from_rotation_y(time.elapsed_seconds() * 0.2);
     }
 }
 

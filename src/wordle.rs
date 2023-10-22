@@ -90,7 +90,7 @@ impl FromStr for WordleGrid {
         for line in s.lines().rev() {
             if line.starts_with("Wordle") {
                 if let Some(num) = line
-                    .split(" ")
+                    .split(' ')
                     .nth(1)
                     .and_then(|num_str| num_str.parse::<u32>().ok())
                 {
@@ -127,7 +127,7 @@ impl FromStr for WordleGrid {
             )
         }
 
-        if grid.len() < 1 {
+        if grid.is_empty() {
             return Err(WordleParseError::InvalidFormat);
         }
 
@@ -157,10 +157,10 @@ impl FromStr for WordleGrid {
             .iter()
             .all(|g| matches!(g.kind, WordleGuessKind::NotInWord))
         {
-            let mut depth: Vec<usize> = vec![std::usize::MAX; grid[0].len()];
+            let mut depths: Vec<usize> = vec![std::usize::MAX; grid[0].len()];
 
-            for col in 0..grid[0].len() {
-                let mut num = 0;
+            for (col, depth) in depths.iter_mut().enumerate() {
+                let mut num: usize = 0;
                 for row in (0..grid.len()).rev() {
                     match grid[row][col].kind {
                         WordleGuessKind::NotInWord => {
@@ -169,22 +169,24 @@ impl FromStr for WordleGrid {
                         _ => break,
                     }
                 }
-                if depth[col] > num {
-                    depth[col] = num;
+                if *depth > num {
+                    *depth = num;
                 }
             }
 
-            let min = depth.iter().min().unwrap();
+            let min = depths.iter().min().unwrap();
 
-            for col in 0..grid[0].len() {
-                if depth[col] == *min {
-                    for row in (0..grid.len()).rev() {
-                        match grid[row][col].kind {
-                            WordleGuessKind::NotInWord => {
-                                grid[row][col].topper = true;
-                            }
-                            _ => break,
+            for (col, depth) in depths.iter().enumerate() {
+                if *depth != *min {
+                    continue;
+                }
+
+                for row in (0..grid.len()).rev() {
+                    match grid[row][col].kind {
+                        WordleGuessKind::NotInWord => {
+                            grid[row][col].topper = true;
                         }
+                        _ => break,
                     }
                 }
             }
@@ -214,7 +216,7 @@ impl WordleGrid {
     /// 678
     /// 543
     /// 012
-    pub fn snake_iter<'a>(&'a self) -> WordleGridSnakeIterator<'a> {
+    pub fn snake_iter(&self) -> WordleGridSnakeIterator {
         WordleGridSnakeIterator {
             grid: self,
             index: 0,
