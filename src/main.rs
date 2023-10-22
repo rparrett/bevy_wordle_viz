@@ -17,12 +17,13 @@ struct CameraContainer;
 #[derive(Component)]
 pub struct WordleBox;
 #[derive(Component)]
-pub struct StartTime(f64);
+pub struct StartTime(f32);
 #[derive(Component)]
 pub struct Destination(Transform);
 
-#[derive(Default)]
+#[derive(Resource, Default)]
 pub struct WordleShare(String);
+#[derive(Resource)]
 
 pub struct Handles {
     green_box: Handle<Scene>,
@@ -46,37 +47,38 @@ const CUBE_SIZE: (f32, f32, f32) = (2.15, 2.11, 2.23);
 
 fn main() {
     App::new()
-        .insert_resource(WindowDescriptor {
-            title: "Bevy Wordle Viz".to_string(),
-            ..Default::default()
-        })
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 1.0 / 16.0f32,
         })
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Bevy Wordle Viz".to_string(),
+                ..default()
+            }),
+            ..default()
+        }))
         .init_resource::<Handles>()
         .init_resource::<WordleShare>()
-        .add_plugin(clipboard::ClipboardPlugin)
-        .add_plugin(EasingsPlugin)
-        .add_startup_system(setup)
-        .add_system(spawn_wordle)
-        .add_system(rotate_lights)
-        .add_system(rotate_camera)
-        .add_system(drop_boxes)
+        .add_plugins(clipboard::ClipboardPlugin)
+        .add_plugins(EasingsPlugin)
+        .add_systems(Startup, setup)
+        .add_systems(
+            Update,
+            (spawn_wordle, rotate_lights, rotate_camera, drop_boxes),
+        )
         .run();
 }
 
 fn rotate_lights(time: Res<Time>, mut query: Query<&mut Transform, With<LightContainer>>) {
     for mut transform in query.iter_mut() {
-        transform.rotation = Quat::from_rotation_y((time.seconds_since_startup() * 0.2) as f32);
+        transform.rotation = Quat::from_rotation_y(time.elapsed_seconds() * 0.2 as f32);
     }
 }
 
 fn rotate_camera(time: Res<Time>, mut query: Query<&mut Transform, With<CameraContainer>>) {
     for mut transform in query.iter_mut() {
-        transform.rotation =
-            Quat::from_rotation_y(((time.seconds_since_startup() * -0.2).sin() * 0.1) as f32);
+        transform.rotation = Quat::from_rotation_y((time.elapsed_seconds() * -0.2).sin() * 0.1);
     }
 }
 
@@ -85,7 +87,7 @@ fn drop_boxes(
     time: Res<Time>,
     mut query: Query<(Entity, &Transform, &Destination, &StartTime)>,
 ) {
-    let current_time = time.seconds_since_startup();
+    let current_time = time.elapsed_seconds();
     for (entity, transform, destination, start_time) in query.iter_mut() {
         if start_time.0 > current_time {
             continue;
@@ -133,7 +135,7 @@ fn spawn_wordle(
     let row_delay_step = 0.6;
     let mut prev_row = 0;
 
-    let current_time = time.seconds_since_startup();
+    let current_time = time.elapsed_seconds();
 
     let mut rng = thread_rng();
 
@@ -158,17 +160,16 @@ fn spawn_wordle(
         let transform =
             Transform::from_translation(destination + start_offset).with_rotation(rotation);
 
-        commands
-            .spawn_bundle(SceneBundle {
+        commands.spawn((
+            SceneBundle {
                 scene: handle,
                 transform,
                 ..default()
-            })
-            .insert_bundle((
-                WordleBox,
-                StartTime(current_time + delay),
-                Destination(Transform::from_translation(destination).with_rotation(rotation)),
-            ));
+            },
+            WordleBox,
+            StartTime(current_time + delay),
+            Destination(Transform::from_translation(destination).with_rotation(rotation)),
+        ));
 
         delay += if row != prev_row {
             row_delay_step
@@ -181,16 +182,15 @@ fn spawn_wordle(
 }
 
 fn setup(mut commands: Commands, handles: Res<Handles>) {
-    commands.spawn_bundle(SceneBundle {
+    commands.spawn(SceneBundle {
         scene: handles.floor.clone(),
         ..default()
     });
 
     commands
-        .spawn_bundle(SpatialBundle::default())
-        .insert(CameraContainer)
+        .spawn((SpatialBundle::default(), CameraContainer))
         .with_children(|parent| {
-            parent.spawn_bundle(Camera3dBundle {
+            parent.spawn(Camera3dBundle {
                 transform: Transform::from_xyz(14.0, 15.0, 14.0)
                     .looking_at(Vec3::new(-7.0, 1.0, -7.0), Vec3::Y),
 
@@ -201,8 +201,7 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
     let light_dist = 8.0;
 
     commands
-        .spawn_bundle(SpatialBundle::default())
-        .insert(LightContainer)
+        .spawn((SpatialBundle::default(), LightContainer))
         .with_children(|parent| {
             for transform in [
                 Transform::from_xyz(light_dist, 8.0, light_dist),
@@ -210,7 +209,7 @@ fn setup(mut commands: Commands, handles: Res<Handles>) {
                 Transform::from_xyz(-light_dist, 8.0, light_dist),
                 Transform::from_xyz(light_dist, 8.0, -light_dist),
             ] {
-                parent.spawn_bundle(PointLightBundle {
+                parent.spawn(PointLightBundle {
                     point_light: PointLight {
                         intensity: 900.0,
                         shadows_enabled: true,

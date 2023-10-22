@@ -6,27 +6,31 @@ use std::sync::{
 };
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 
-type OnPasteSender = Sender<String>;
-type OnPasteReceiver = Receiver<String>;
+#[derive(Resource)]
+struct OnPasteSender(Mutex<Sender<String>>);
+
+#[derive(Resource)]
+struct OnPasteReceiver(Mutex<Receiver<String>>);
 
 pub struct ClipboardPlugin;
 
 impl Plugin for ClipboardPlugin {
     fn build(&self, app: &mut App) {
-        let channel = std::sync::mpsc::channel();
-        let paste_sender: OnPasteSender = channel.0;
-        let paste_receiver: OnPasteReceiver = channel.1;
+        let (tx, rx) = std::sync::mpsc::channel();
 
-        app.insert_resource(Mutex::new(paste_sender))
-            .insert_resource(Mutex::new(paste_receiver))
-            .add_startup_system(setup_clipboard_system)
-            .add_system(clipboard);
+        let paste_sender = OnPasteSender(Mutex::new(tx));
+        let paste_receiver = OnPasteReceiver(Mutex::new(rx));
+
+        app.insert_resource(paste_sender)
+            .insert_resource(paste_receiver)
+            .add_systems(Startup, setup_clipboard_system)
+            .add_systems(Update, clipboard);
     }
 }
 
-fn setup_clipboard_system(paste_sender: Res<Mutex<OnPasteSender>>) {
+fn setup_clipboard_system(paste_sender: Res<OnPasteSender>) {
     let web_window = web_sys::window().expect("could not get window");
-    let local_sender = paste_sender.lock().unwrap().clone();
+    let local_sender = paste_sender.0.lock().unwrap().clone();
 
     gloo_events::EventListener::new(&web_window, "paste", move |event| {
         let event = event.dyn_ref::<web_sys::ClipboardEvent>().unwrap_throw();
@@ -39,8 +43,8 @@ fn setup_clipboard_system(paste_sender: Res<Mutex<OnPasteSender>>) {
     .forget();
 }
 
-fn clipboard(paste_receiver: Res<Mutex<OnPasteReceiver>>, mut wordle_share: ResMut<WordleShare>) {
-    if let Ok(text) = paste_receiver.lock().unwrap().try_recv() {
+fn clipboard(paste_receiver: Res<OnPasteReceiver>, mut wordle_share: ResMut<WordleShare>) {
+    if let Ok(text) = paste_receiver.0.lock().unwrap().try_recv() {
         wordle_share.0 = text;
     }
 }
